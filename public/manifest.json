@@ -1,0 +1,17 @@
+{
+  "name": "DeviceTracker",
+  "short_name": "DeviceTracker",
+  "description": "Track your laptop and phone location from anywhere.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
