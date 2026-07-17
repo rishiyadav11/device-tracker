@@ -28,6 +28,7 @@ export default async function DeviceDetailPage({
       locations={locations.map((l) => ({
         lat: l.lat,
         lng: l.lng,
+        accuracyMeters: l.accuracyMeters,
         capturedAt: l.capturedAt.toISOString(),
       }))}
     />

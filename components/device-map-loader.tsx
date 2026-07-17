@@ -16,6 +16,7 @@ const DeviceMap = dynamic(
 export function DeviceMapLoader(props: {
   current: LatLng | null;
   trail?: LatLng[];
+  accuracyMeters?: number | null;
   height?: number;
   interactive?: boolean;
 }) {

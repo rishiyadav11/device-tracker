@@ -51,6 +51,7 @@ export default async function DashboardPage() {
                         }
                       : null
                   }
+                  accuracyMeters={device.latestLocation?.accuracyMeters ?? null}
                   height={160}
                   interactive={false}
                 />

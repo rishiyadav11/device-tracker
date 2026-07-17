@@ -10,6 +10,10 @@ on-demand with "Locate now".
 app is open, on an interval while open, and can be nudged to report
 immediately via "Locate now" — which it picks up next time it's open.
 
+**Windows background tracking:** for a Windows laptop/PC you can install a
+small background agent that reports location **even when no browser is open**
+— see [Windows background agent](#windows-background-agent) below.
+
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind + shadcn/ui
@@ -69,6 +73,34 @@ permission).
 5. Run `npm run db:push` once (locally, pointed at the same `DATABASE_URL`)
    to make sure the production database has the schema.
 
+## Windows background agent
+
+For a Windows laptop/PC, a small PowerShell agent can report location in the
+background — at logon and every 10 minutes — **even when no browser is open**.
+
+**Install (on the PC you want to track):**
+1. Open the device's page on the website and click **Track on Windows**.
+2. Copy the generated command and paste it into **PowerShell** on that PC.
+
+That command downloads [`public/agent/devicetracker-agent.ps1`](public/agent/devicetracker-agent.ps1)
+to `%LOCALAPPDATA%\DeviceTracker` and registers a Scheduled Task (no admin
+rights needed). To stop, run `irm <your-url>/agent/uninstall.ps1 | iex`.
+
+**Accuracy:** the agent uses the **Windows Location service** (WiFi-based
+positioning, ~tens of meters) when Location is enabled
+(Settings → Privacy & security → Location). If it's off, or the PC has no
+WiFi adapter, it falls back to **IP-based** location (city-level). Desktop PCs
+without GPS or WiFi are always approximate.
+
+**How it authenticates:** the setup command embeds a one-time per-device
+secret used as a bearer token against `POST /api/devices/[id]/location`.
+Re-generating the command (`POST /api/devices/[id]/agent-setup`) rotates the
+secret and disables any previously installed agent for that device.
+
+> Note: `irm <url> | iex` runs a script from your own server. It's the same
+> pattern many Windows installers use; only run commands you generated from
+> your own DeviceTracker instance.
+
 ## Icons
 
 `public/icon.svg` is a placeholder app icon. Swap it (and update
@@ -95,4 +127,5 @@ components/
   device-detail.tsx      device page UI incl. "Locate now"
 public/
   manifest.json, sw.js  PWA installability
+  agent/                Windows background agent (PowerShell) + installer
 ```

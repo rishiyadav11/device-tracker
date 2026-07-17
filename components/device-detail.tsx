@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DeviceMapLoader } from "@/components/device-map-loader";
+import { WindowsAgentSetup } from "@/components/windows-agent-setup";
 import { timeAgo } from "@/lib/format";
 
 type Device = {
@@ -28,6 +29,7 @@ type Device = {
 type LocationRow = {
   lat: number;
   lng: number;
+  accuracyMeters: number | null;
   capturedAt: string;
 };
 
@@ -66,6 +68,7 @@ export function DeviceDetail({
   const current = locations[0]
     ? { lat: locations[0].lat, lng: locations[0].lng }
     : null;
+  const currentAccuracy = locations[0]?.accuracyMeters ?? null;
   const trail = [...locations].reverse().map((l) => ({ lat: l.lat, lng: l.lng }));
 
   const handleRename = async () => {
@@ -159,6 +162,7 @@ export function DeviceDetail({
             )}
             Locate now
           </Button>
+          <WindowsAgentSetup deviceId={device.id} />
           <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
             <DialogTrigger render={<Button variant="outline" size="sm" />}>
               <Pencil className="size-4" />
@@ -201,10 +205,17 @@ export function DeviceDetail({
         </p>
       )}
 
-      <DeviceMapLoader current={current} trail={trail} height={380} />
+      <DeviceMapLoader
+        current={current}
+        trail={trail}
+        accuracyMeters={currentAccuracy}
+        height={380}
+      />
 
       <p className="text-sm text-muted-foreground">
         Last seen {timeAgo(device.lastSeenAt)}
+        {currentAccuracy != null &&
+          ` · accurate to ±${Math.round(currentAccuracy)} m`}
         {locations.length > 1 && ` · ${locations.length} points in history`}
       </p>
     </div>
