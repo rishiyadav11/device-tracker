@@ -1,5 +1,10 @@
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { authConfig } from "@/lib/auth.config";
+
+// Use the edge-safe config only — this keeps bcrypt and the Neon/Drizzle
+// client out of the middleware bundle so it runs reliably on the Edge runtime.
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
