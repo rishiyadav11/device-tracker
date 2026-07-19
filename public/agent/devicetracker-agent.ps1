@@ -29,6 +29,11 @@ if (-not $DeviceId -or -not $Secret -or -not $BaseUrl) {
 
 $BaseUrl = $BaseUrl.TrimEnd("/")
 
+# Required for [System.WindowsRuntimeSystemExtensions] (the WinRT-to-.NET
+# async bridge used below) to be available at all in Windows PowerShell 5.1 -
+# without this, every WinRT async call fails before it even starts.
+Add-Type -AssemblyName System.Runtime.WindowsRuntime | Out-Null
+
 # Awaits a WinRT IAsyncOperation<T> from Windows PowerShell 5.1.
 function Await($WinRtTask, $ResultType) {
   $asTask = ([System.WindowsRuntimeSystemExtensions].GetMethods() |
@@ -45,8 +50,28 @@ function Await($WinRtTask, $ResultType) {
 function Get-WindowsLocation {
   try {
     [void][Windows.Devices.Geolocation.Geolocator, Windows.Devices.Geolocation, ContentType = WindowsRuntime]
+    [void][Windows.Devices.Geolocation.GeolocationAccessStatus, Windows.Devices.Geolocation, ContentType = WindowsRuntime]
+    [void][Windows.Devices.Geolocation.PositionStatus, Windows.Devices.Geolocation, ContentType = WindowsRuntime]
+
+    # Explicitly request consent first. Without this, GetGeopositionAsync can
+    # fail with an unhelpful UnauthorizedAccess error even when the location
+    # toggle looks "on" in Settings.
+    $accessStatus = Await ([Windows.Devices.Geolocation.Geolocator]::RequestAccessAsync()) ([Windows.Devices.Geolocation.GeolocationAccessStatus])
+    if ($accessStatus -ne [Windows.Devices.Geolocation.GeolocationAccessStatus]::Allowed) {
+      Write-Host "Windows Location access: $accessStatus (not Allowed)." -ForegroundColor Yellow
+      return $null
+    }
+
     $locator = New-Object Windows.Devices.Geolocation.Geolocator
     $locator.DesiredAccuracy = [Windows.Devices.Geolocation.PositionAccuracy]::High
+
+    # LocationStatus explains *why* before we even try: Disabled means the
+    # Windows Settings toggle is off; NoData usually means no WiFi/GPS
+    # provider is available on this hardware (common on wired desktops).
+    if ($locator.LocationStatus -eq [Windows.Devices.Geolocation.PositionStatus]::Disabled) {
+      Write-Host "Windows Location is turned off in Settings > Privacy & security > Location." -ForegroundColor Yellow
+      return $null
+    }
 
     $pos = Await ($locator.GetGeopositionAsync()) ([Windows.Devices.Geolocation.Geoposition])
     $c = $pos.Coordinate
@@ -57,6 +82,7 @@ function Get-WindowsLocation {
       source         = "gps"
     }
   } catch {
+    Write-Host "Windows Location unavailable: $($_.Exception.Message)" -ForegroundColor Yellow
     return $null
   }
 }
