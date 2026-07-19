@@ -75,14 +75,25 @@ permission).
 
 ## Windows background agent
 
-For a Windows laptop/PC, a small PowerShell agent can report location in the
-background — at logon and every 10 minutes — **even when no browser is open**.
+For a Windows laptop/PC, a small PowerShell agent reports location in the
+background — at logon and every 2 minutes — **even when no browser is open**.
+The dashboard and device pages auto-refresh, so new points appear live.
 
-**Install (on the PC you want to track):**
-1. Open the device's page on the website and click **Track on Windows**.
-2. Copy the generated command and paste it into **PowerShell** on that PC.
+**Easiest: self-enroll (no browser needed on the target PC)**
+1. Sign in and click **Add Windows PC** on the dashboard, then **Generate
+   install command**.
+2. On the PC you want to track, open **PowerShell** and paste the command.
 
-That command downloads [`public/agent/devicetracker-agent.ps1`](public/agent/devicetracker-agent.ps1)
+The PC enrolls itself as a new device (named after the computer) and starts
+reporting. Run the same command on as many PCs as you like. It's backed by an
+account-level enrollment token (`POST /api/enroll-token` generates the command;
+[`public/agent/enroll.ps1`](public/agent/enroll.ps1) calls `POST /api/enroll`
+to create the device and fetch a per-device secret).
+
+**Alternative: per-device setup.** From an existing device's page, click
+**Track on Windows** for a command scoped to just that device.
+
+Either way the command downloads [`public/agent/devicetracker-agent.ps1`](public/agent/devicetracker-agent.ps1)
 to `%LOCALAPPDATA%\DeviceTracker` and registers a Scheduled Task (no admin
 rights needed). To stop, run `irm <your-url>/agent/uninstall.ps1 | iex`.
 

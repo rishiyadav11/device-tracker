@@ -65,6 +65,41 @@ export function DeviceDetail({
     };
   }, []);
 
+  // Live updates: refetch this device's locations on an interval so points
+  // reported by the background agent (or another browser) appear without a
+  // manual reload.
+  useEffect(() => {
+    const refresh = async () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        const r = await fetch(`/api/devices/${initialDevice.id}/locations?limit=200`);
+        if (!r.ok) return;
+        const data = await r.json();
+        const rows: LocationRow[] = data.locations;
+        setLocations((prev) => {
+          const prevLatest = prev[0]?.capturedAt;
+          const nextLatest = rows[0]?.capturedAt;
+          if (nextLatest && nextLatest !== prevLatest) {
+            setDevice((d) => ({ ...d, lastSeenAt: nextLatest }));
+            return rows;
+          }
+          return prev;
+        });
+      } catch {
+        // Ignore transient failures; try again next tick.
+      }
+    };
+    const id = setInterval(refresh, 15000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [initialDevice.id]);
+
   const current = locations[0]
     ? { lat: locations[0].lat, lng: locations[0].lng }
     : null;

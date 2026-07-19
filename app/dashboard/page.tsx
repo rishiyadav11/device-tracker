@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Monitor } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { getDevicesForUser } from "@/lib/queries";
 import { timeAgo } from "@/lib/format";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DeviceMapLoader } from "@/components/device-map-loader";
+import { DashboardAutoRefresh } from "@/components/dashboard-auto-refresh";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -19,11 +20,22 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Your devices</h1>
-        <Button render={<Link href="/dashboard/devices/new" />} nativeButton={false}>
-          <Plus className="size-4" />
-          Add device
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            render={<Link href="/dashboard/add-windows" />}
+            nativeButton={false}
+            variant="outline"
+          >
+            <Monitor className="size-4" />
+            Add Windows PC
+          </Button>
+          <Button render={<Link href="/dashboard/devices/new" />} nativeButton={false}>
+            <Plus className="size-4" />
+            Add device
+          </Button>
+        </div>
       </div>
+      <DashboardAutoRefresh intervalMs={30000} />
 
       {devices.length === 0 ? (
         <Card>

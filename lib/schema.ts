@@ -22,6 +22,9 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  // Hash of an account-level enrollment token used by the "add a Windows PC via
+  // PowerShell" flow. Reusable across PCs; regenerating it invalidates the old.
+  enrollmentTokenHash: text("enrollment_token_hash"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

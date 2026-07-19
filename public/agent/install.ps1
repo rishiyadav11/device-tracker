@@ -41,7 +41,7 @@ $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $psArgs
 
 $atLogon = New-ScheduledTaskTrigger -AtLogOn
 $repeat = New-ScheduledTaskTrigger -Once -At (Get-Date) `
-  -RepetitionInterval (New-TimeSpan -Minutes 10) `
+  -RepetitionInterval (New-TimeSpan -Minutes 2) `
   -RepetitionDuration (New-TimeSpan -Days 3650)
 
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries `
@@ -57,5 +57,5 @@ Write-Host "Installed. Sending a first location now..."
   -DeviceId $DeviceId -Secret $Secret -BaseUrl $BaseUrl
 
 Write-Host ""
-Write-Host "Done. This PC will now report its location at logon and every 10 minutes." -ForegroundColor Green
+Write-Host "Done. This PC will now report its location at logon and every 2 minutes." -ForegroundColor Green
 Write-Host "To stop tracking, run:  irm $BaseUrl/agent/uninstall.ps1 | iex"
