@@ -68,6 +68,16 @@ function Get-BrowserExe {
   return $null
 }
 
+function Get-LastSeenAt {
+  try {
+    $r = Invoke-RestMethod -Uri "$BaseUrl/api/devices/$DeviceId/last-report" `
+      -Headers @{ Authorization = "Bearer $Secret" } -TimeoutSec 15
+    return $r.lastSeenAt
+  } catch {
+    return $null
+  }
+}
+
 function Invoke-BrowserRelay {
   $browser = Get-BrowserExe
   if (-not $browser) { return $false }
@@ -91,6 +101,13 @@ function Invoke-BrowserRelay {
     $waitSeconds = 10
   }
 
+  # A browser launching successfully doesn't mean the page actually reported
+  # a location (permission ignored, prompt missed, page error, etc.) - check
+  # the server's own record of the last report before and after, so a launch
+  # that didn't actually result in a report correctly falls through to the
+  # other methods below instead of silently reporting nothing this cycle.
+  $before = Get-LastSeenAt
+
   try {
     $proc = Start-Process -FilePath $browser -ArgumentList $processArgs -PassThru -ErrorAction Stop
     for ($i = 0; $i -lt $waitSeconds; $i++) {
@@ -98,10 +115,17 @@ function Invoke-BrowserRelay {
       if ($proc.HasExited) { break }
     }
     if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
-    return $true
   } catch {
     return $false
   }
+
+  $after = Get-LastSeenAt
+  if ($after -and $after -ne $before) {
+    Write-Host "Browser relay confirmed: last report updated to $after" -ForegroundColor Cyan
+    return $true
+  }
+  Write-Host "Browser relay launched but did not result in a new report - falling back." -ForegroundColor Yellow
+  return $false
 }
 
 # --- Method 2: Windows Location service (OS API directly) ------------------
