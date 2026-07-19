@@ -94,8 +94,12 @@ to create the device and fetch a per-device secret).
 **Track on Windows** for a command scoped to just that device.
 
 Either way the command downloads [`public/agent/devicetracker-agent.ps1`](public/agent/devicetracker-agent.ps1)
-to `%LOCALAPPDATA%\DeviceTracker` and registers a Scheduled Task (no admin
-rights needed). To stop, run `irm <your-url>/agent/uninstall.ps1 | iex`.
+to `%LOCALAPPDATA%\DeviceTracker` and registers a Scheduled Task. This usually
+works from a normal (non-elevated) PowerShell; the script automatically falls
+back to `schtasks.exe` if the first method is denied. If both are blocked by
+local policy, re-run PowerShell **as Administrator** and try the command
+again — the script will tell you if this is needed. To stop, run
+`irm <your-url>/agent/uninstall.ps1 | iex`.
 
 **Accuracy:** the agent uses the **Windows Location service** (WiFi-based
 positioning, ~tens of meters) when Location is enabled
